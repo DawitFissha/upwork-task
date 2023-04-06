@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useFormik } from 'formik'
 import {loggedIn} from '../features/loginSlice'
@@ -19,10 +19,11 @@ const validate = (values)=>{
   }
 export default function Signin({onSignin}){
 const [signinError,setSigninError] = useState()
+const [user,setUser] = useState()
 const dispatch = useDispatch()
-  const secretData = useSelector(state=>state.secret)
+  // const secretData = useSelector(state=>state.secret)
   const handleSignin = (uname,password)=>{
-    let user = secretData.find(sd=>sd.uname===uname)
+    // let user = secretData.find(sd=>sd.uname===uname)
     if(!user){
         setSigninError('User not registered') 
         return
@@ -45,6 +46,9 @@ const dispatch = useDispatch()
     resetForm()
   }
 })
+useEffect(()=>{
+  chrome.storage.sync.get(["user"]).then(result=>setUser(result.user))
+},[])
     return (
     
         <div style={{
@@ -73,8 +77,6 @@ const dispatch = useDispatch()
        onChange={formik.handleChange}
        type="password" name="password" value = {formik.values.password} id="password" placeholder="Password"/>
        <button type='submit' style={{...style,height:'35px'}}>Signin</button>
- 
-       
          <h3 style={{...style,color:'red'}}>
            {signinError}
          </h3>

@@ -1,16 +1,20 @@
 import * as React from 'react'
-import { useDispatch } from 'react-redux'
-import {regeneret,removeUser} from '../features/secretSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import {regeneret} from '../features/secretSlice'
 import { resetLoginState } from '../features/loginSlice'
 import { resetSignupState } from '../features/signupSlice'
 import {generateRandomString} from '../utils/createRandomString'
-import {getSecretFromChrome} from '../popup'
 const buttonStyle = {
     height:'30px',
     width:'120px'
 }
-export default function UserPage({user,secret}){
+export default function UserPage({user}){
     const dispatch = useDispatch()
+    const usertoStorage = useSelector(state=>state.secret.find(s=>s.uname===user))
+    const [secret,setSecret] = React.useState()
+    React.useEffect(()=>{
+    chrome.storage.sync.get(["user"]).then(result=>setSecret(result.user))
+    },[usertoStorage])
     return(
         <div
         style={{
@@ -23,22 +27,24 @@ export default function UserPage({user,secret}){
             display:'flex',
             flexDirection:'column'
         }}>
-            <h2>Your secret is {secret} </h2>
+            <h2>Your secret is {secret?.secret} </h2>
             <div style={{display:'flex',gap:'13px'}}>
              <button
-             onClick={()=>{
+             onClick={async ()=>{
                 dispatch(regeneret({
                     user,
                     newSecret:generateRandomString()
                 }))
-               
+                chrome.storage.sync.set({user:usertoStorage}).then(() => {
+                    console.log("Value is set");
+                  });
              }}
              style={buttonStyle}>
                 Regenerate
              </button>
              <button
              onClick={()=>{
-                dispatch(removeUser(user))
+                // dispatch(removeUser(user))
                 dispatch(resetLoginState())
                 dispatch(resetSignupState())
              }}
@@ -46,9 +52,7 @@ export default function UserPage({user,secret}){
              >
                logout
              </button>
-                <p>
-                    {/* { getSecretFromChrome() } */}
-                    </p>
+              
             </div>
         </div>
         </div>

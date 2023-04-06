@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import {signUp} from '../features/secretSlice'
 import { useFormik } from 'formik'
-import {generateRandomString} from '../utils/createRandomString'
 import {signedUp} from '../features/signupSlice'
 const Input = (props)=>{
     const style = {marginLeft:'15px',marginRight:"15px",marginTop:"10px",height:'25px',borderRadius:'5px'}
@@ -25,7 +24,7 @@ const validate = (values)=>{
     }
     return errors
   }
-export default function SignUp(){
+export default function SignUp({loading}){
     const dispatch = useDispatch()
   const formik = useFormik({
   initialValues:{
@@ -34,14 +33,25 @@ export default function SignUp(){
     confirm_password:""
   },
   validate,
-  onSubmit:(values,{resetForm})=>{
+  onSubmit:async (values,{resetForm})=>{
     dispatch(signUp({
       uname:values.uname,
       password:values.confirm_password,
-      secret:generateRandomString()
+      // secret:generateRandomString()
     }))
     resetForm()
     dispatch(signedUp())
+    await chrome.runtime.sendMessage({data:{
+            type:'signup',
+            value:true
+          }})
+          await chrome.runtime.sendMessage({data:{
+            type:'user',
+            authInfo:{
+            uname:values.uname,
+            password:values.confirm_password,
+            }
+          }})
   }
 })
     return (
@@ -75,7 +85,11 @@ export default function SignUp(){
        required
        onChange={formik.handleChange}
        type = "password" name="confirm_password" value={formik.values.confirm_password} id="confirm-password" placeholder="confirm password" />
-       <button type='submit' style={{...style,height:'35px'}}>Signup</button>
+       <button type='submit' style={{...style,height:'35px'}}>{
+        
+          loading? 'Loading...': "Signup"
+        
+       }</button>
  
        {formik.errors.confirm_password?
          <h3 style={{...style,color:'red'}}>
